@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="VESRION 1/assests/logo.PNG" alt="Dominus Logo" width="500"/>
+<img src="VERSION 1/assests/logo.PNG" alt="Dominus Logo" width="500"/>
 
 <br/>
 
