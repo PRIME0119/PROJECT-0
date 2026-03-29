@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System 2 | Secondary Control System</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        .glass-card {
+            background: rgba(30, 41, 59, 0.5);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            animation: fadeIn 0.8s ease-out;
+        }
+        
+        .btn-primary {
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
+        }
+        
+        .power-btn {
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        .power-btn.active {
+            box-shadow: 0 0 20px rgba(74, 222, 128, 0.7);
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(74, 222, 128, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0); }
+        }
+    </style>
+</head>
+<body class="text-gray-100">
+    <!-- Animated background elements -->
+    <div class="fixed inset-0 overflow-hidden -z-10">
+        <div class="absolute w-64 h-64 rounded-full bg-primary opacity-20 blur-3xl -top-32 -left-32"></div>
+        <div class="absolute w-96 h-96 rounded-full bg-secondary opacity-20 blur-3xl -bottom-32 -right-32"></div>
+    </div>
+    
+    <!-- Main content -->
+    <div class="container mx-auto px-4 py-16 min-h-screen flex flex-col">
+        <div class="flex-grow flex flex-col items-center justify-center">
+            <div class="glass-card p-8 w-full max-w-md text-center">
+                <div class="flex justify-between w-full mb-6 items-center">
+                    <h1 class="text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-300">
+                        System 2
+                    </h1>
+                    <button onclick="window.location.href='/control_panel'" class="text-sm text-indigo-300 hover:underline">
+                        ← Back to Control Panel
+                    </button>
+                </div>
+                <div class="flex justify-center items-center gap-4 mb-4">
+                    <div id="status-indicator" class="text-emerald-400 flex items-center">
+                        <span class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse mr-2"></span>
+                        ONLINE
+                    </div>
+                    <div id="mode-status" class="text-blue-400 text-sm">
+                        MODE: <span id="mode-text">REMOTE</span>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 gap-8 w-full max-w-2xl">
+                    <!-- Disk Selection -->
+                    <div class="glass-card p-6">
+                         <h3 class="text-xl font-semibold mb-4">Disk Selection</h3>
+                         <div class="grid grid-cols-2 gap-4">
+                             <button class="disk-btn px-4 py-3 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors relative group" data-disk="1">
+                                 <div class="absolute top-2 right-2 w-2 h-2 rounded-full bg-gray-500 group-hover:bg-emerald-500"></div>
+                                 <div class="text-lg font-medium">DISK 1</div>
+                                 <div class="text-xs text-gray-400 mt-1">Home Server</div>
+                                 <div class="text-[10px] text-emerald-500 mt-1 font-mono hidden active-disk">ACTIVE</div>
+                             </button>
+                             <button class="disk-btn px-4 py-3 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors relative group" data-disk="2">
+                              <div class="absolute top-2 right-2 w-2 h-2 rounded-full bg-gray-500 group-hover:bg-emerald-500"></div>
+                              <div class="text-lg font-medium">DISK 2</div>
+                              <div class="text-xs text-gray-400 mt-1">Goggle TV</div>
+                               <div class="text-[10px] text-emerald-500 mt-1 font-mono hidden active-disk">ACTIVE</div>
+                             </button>
+                          </div>
+                    </div>
+                    
+                    <!-- Warning section -->
+                    <div id="system-active-warning" class="hidden glass-card p-4 mb-4 bg-red-900/30 border border-red-700">
+                          <div class="flex items-center">
+                          <div class="text-red-400 mr-2">⚠</div>
+                         <p class="text-sm">System 2 is On - Please shutdown first</p>
+                          </div>
+                    </div>
+
+                    <div id="local-mode-warning" class="hidden glass-card p-4 mb-4 bg-yellow-900/30 border border-yellow-700">
+                          <div class="flex items-center">
+                             <div class="text-yellow-400 mr-2">⚠</div>
+                             <p class="text-sm">
+                                 System is in LOCAL (Manual) mode.<br>
+                                 Web control is disabled.
+                             </p>
+                         </div>
+                     </div>
+
+
+                    <!-- Power Control -->
+                    <div id="power-control" class="glass-card p-6 hidden">
+                        <h3 class="text-xl font-semibold mb-4">Power Control</h3>
+                        <button id="sys-power-btn"
+                                class="power-btn w-full px-6 py-4 bg-red-600 hover:bg-red-500 rounded-lg text-xl font-bold transition-all">
+                            POWER ON
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-6 flex justify-between w-full max-w-md">
+                <button onclick="location.href='/logout'" class="text-red-400 hover:underline">
+                    Logout
+                </button>
+                <div class="flex gap-4">
+                    <button onclick="openHelp()" class="text-indigo-300 hover:underline">
+                        Help
+                    </button>
+                    <button data-action="power-off" class="text-red-400 hover:underline">
+                        Power Off
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Power Off Confirmation Dialog -->
+        <div id="power-confirm" class="hidden fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+            <div class="glass-card p-6 w-80 text-center">
+                <p class="mb-4">Are you sure you want to power off System 2?</p>
+                <div class="flex justify-center gap-4">
+                    <button onclick="confirmPowerAction(true)" class="px-4 py-2 bg-green-600 rounded-lg hover:bg-green-700">Yes</button>
+                    <button onclick="confirmPowerAction(false)" class="px-4 py-2 bg-gray-600 rounded-lg hover:bg-gray-700">No</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Power OFF Confirmation (main button) -->
+        <div id="shutdown-warning-dialog" class="hidden fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+             <div class="glass-card p-6 w-80 text-center">
+                 <p class="mb-4 text-red-300">⚠ Are you sure you want to POWER OFF?<br>This may be dangerous while system is running.</p>
+                 <div class="flex justify-center gap-4">
+                    <button onclick="confirmShutdownAction(true)" class="px-4 py-2 bg-green-600 rounded-lg hover:bg-green-700">Yes</button>
+                    <button onclick="confirmShutdownAction(false)" class="px-4 py-2 bg-gray-600 rounded-lg hover:bg-gray-700">No</button>
+                </div>
+            </div>
+        </div>
+
+        <footer class="mt-12 text-center text-gray-400 text-sm">
+            <p>© Dual System Controller | Made with ❤ by Prime</p>
+        </footer>
+    </div>
+    
+<script>
+    function showLocalModeOverlay(show) {
+    const localWarning = document.getElementById('local-mode-warning');
+    const diskSection = document.querySelector('.disk-btn')?.closest('.glass-card');
+    const powerControl = document.getElementById('power-control');
+
+    if (show) {
+        localWarning?.classList.remove('hidden');
+        diskSection?.classList.add('opacity-60');
+        powerControl?.classList.add('opacity-60');
+    } else {
+        localWarning?.classList.add('hidden');
+        diskSection?.classList.remove('opacity-60');
+        powerControl?.classList.remove('opacity-60');
+    }
+}
+    // ==================== SYSTEM 2 SPECIFIC REAL-TIME CODE ====================
+window.addEventListener('load', () => {
+    const system = 'system2';
+
+    function updateUI(state) {
+        const modeText = document.getElementById('mode-text');
+        const diskButtons = document.querySelectorAll('.disk-btn');
+        const powerBtn = document.getElementById('sys-power-btn');
+        const statusIndicator = document.getElementById('status-indicator');
+        const powerControl = document.getElementById('power-control');
+        const warning = document.getElementById('system-active-warning');
+        const localWarning = document.getElementById('local-mode-warning');
+        if (state.power) {
+            statusIndicator.innerHTML =
+                '<span class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse mr-2"></span> ONLINE';
+        } else {
+            statusIndicator.innerHTML =
+                '<span class="w-3 h-3 rounded-full bg-gray-500 mr-2"></span> OFFLINE';
+        }
+
+        if (state.mode === 'local') {
+           modeText.textContent = "LOCAL";
+           modeText.classList.remove('text-blue-400');
+           modeText.classList.add('text-yellow-400');
+
+
+           // Lock controls
+           diskButtons.forEach(btn => btn.disabled = true);
+           powerBtn.disabled = true;
+           powerBtn.classList.add('opacity-50');
+
+           showLocalModeOverlay(true);
+           if (powerControl) powerControl.classList.add('hidden');
+       } else {
+           modeText.textContent = "REMOTE";
+           modeText.classList.remove('text-yellow-400');
+           modeText.classList.add('text-blue-400');
+
+
+
+           diskButtons.forEach(btn => btn.disabled = false);
+           powerBtn.disabled = false;
+           powerBtn.classList.remove('opacity-50');
+
+           showLocalModeOverlay(false);
+           if (powerControl) powerControl.classList.remove('hidden');
+       }
+
+        const allowPowerControl = state.mode !== 'local';
+        if (state.power) {
+            powerBtn.textContent = "POWER OFF";
+            powerBtn.classList.remove('bg-red-600');
+            powerBtn.classList.add('bg-green-600');
+            if (powerControl && allowPowerControl) powerControl.classList.remove('hidden');
+        } else {
+            powerBtn.textContent = "POWER ON";
+            powerBtn.classList.remove('bg-green-600');
+            powerBtn.classList.add('bg-red-600');
+            if (powerControl && allowPowerControl) powerControl.classList.remove('hidden');
+        }
+
+        document.querySelectorAll('.disk-btn').forEach(btn => {
+            if (state.disk) {
+                btn.classList.remove('bg-green-600', 'bg-gray-700');
+                btn.classList.add(state.disk === btn.dataset.disk ? 'bg-green-600' : 'bg-gray-700');
+            }
+            btn.disabled = (state.mode === 'local');
+        });
+    }
+
+    // Initial sync on page load
+    fetch(`/api/system_state/${system}`)
+        .then(res => res.json())
+        .then(updateUI);
+
+    // Realtime sync via Socket.IO
+    const socket = io();
+    socket.on('system_state', (fullState) => {
+        if (fullState[system]) {
+            updateUI(fullState[system]);
+        }
+    });
+});
+// ==========================================================================
+
+// Disk Buttons for System 2
+document.querySelectorAll('.disk-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        if (this.disabled) return;
+        const disk = this.dataset.disk;
+        
+        fetch(`/api/select_disk/system2/${disk}`)
+            .then(response => response.json())
+            .then(data => {
+                if(data.status === "ok") {
+                    // Visual feedback
+                    document.querySelectorAll('.disk-btn').forEach(b => {
+                        b.classList.remove('bg-green-600');
+                        b.classList.add('bg-gray-700');
+                    });
+                    this.classList.remove('bg-gray-700');
+                    this.classList.add('bg-green-600');
+                    
+                    // Show power control after 5s
+                    setTimeout(() => {
+                        document.getElementById('power-control').classList.remove('hidden');
+                    }, 5000);
+                } else if (data.status === "locked") {
+                    const warningBox = document.getElementById('system-active-warning');
+                    if (warningBox) {
+                         warningBox.classList.remove('hidden');
+                         setTimeout(() => warningBox.classList.add('hidden'), 3000);
+                         }
+                }
+            });
+    });
+});
+
+// Power Control Button for System 2
+document.getElementById('sys-power-btn').addEventListener('click', function () {
+    if (this.disabled) return;
+    const powerBtn = this;
+    if (powerBtn.textContent.includes("OFF")) {
+        const dialog = document.getElementById('shutdown-warning-dialog');
+        if (dialog) dialog.classList.remove('hidden');
+    } else {
+        fetch('/api/toggle_power/system2', { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === "on") {
+                    powerBtn.textContent = "POWER OFF";
+                    powerBtn.classList.remove('bg-red-600');
+                    powerBtn.classList.add('bg-green-600');
+                } else {
+                    setTimeout(() => {
+                        document.getElementById('power-control').classList.add('hidden');
+                        powerBtn.textContent = "POWER ON";
+                        powerBtn.classList.remove('bg-green-600');
+                        powerBtn.classList.add('bg-red-600');
+                    }, 5000);
+                }
+            });
+    }
+});
+
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: 'rgba(99, 102, 241, 0.8)',
+                        secondary: 'rgba(167, 139, 250, 0.8)',
+                        dark: 'rgba(15, 23, 42, 0.8)'
+                    },
+                    boxShadow: {
+                        'glass': '0 4px 30px rgba(0, 0, 0, 0.1)',
+                        'neon': '0 0 10px rgba(99, 102, 241, 0.8)'
+                    }
+                }
+            }
+        }
+        
+// Power Off Button for System 2
+document.querySelector('[data-action="power-off"]').addEventListener('click', function() {
+    document.getElementById('power-confirm').classList.remove('hidden');
+});
+
+function confirmPowerAction(confirm) {
+    document.getElementById('power-confirm').classList.add('hidden');
+    if (confirm) {
+        fetch('/api/power_off/system2')
+            .then(response => response.json())
+            .then(data => {
+                if(data.status === "ok") {
+                    window.location.href = '/control_panel';
+                }
+            });
+    }
+}
+
+function closeDiskWarning() {
+    const dialog = document.getElementById('system-active-warning');
+    if (dialog) dialog.classList.add('hidden');
+}
+
+function confirmShutdownAction(confirm) {
+    const dialog = document.getElementById('shutdown-warning-dialog');
+    if (dialog) dialog.classList.add('hidden');
+
+    if (confirm) {
+        fetch('/api/toggle_power/system2', { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+                // UI will auto-update via socket
+            });
+    }
+}
+</script>
+</body>
+</html>

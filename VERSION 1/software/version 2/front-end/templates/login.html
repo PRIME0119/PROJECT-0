@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DOMINUS | Authentication</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Rajdhani', 'sans-serif'],
+                        display: ['Orbitron', 'sans-serif'],
+                    },
+                    colors: {
+                        dominus: {
+                            accent: '#00e5ff',
+                            dark: '#020c1b',
+                            panel: 'rgba(10, 25, 47, 0.6)'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        html, body {
+            height: 100%;
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+            background-color: #020c1b;
+            color: #e6f1ff;
+            font-family: 'Rajdhani', sans-serif;
+            perspective: 1000px;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: 
+                radial-gradient(circle at 50% 10%, rgba(0, 238, 255, 0.08) 0%, transparent 60%);
+            z-index: -2;
+            pointer-events: none;
+        }
+
+        .main-layout {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            z-index: 10;
+        }
+
+        .hero-background {
+            position: absolute;
+            inset: 0;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 4px,
+                rgba(0, 229, 255, 0.02) 4px,
+                rgba(0, 229, 255, 0.02) 8px
+            );
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .panel {
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            background: var(--tw-colors-dominus-panel);
+            border-radius: 16px;
+            border: 1px solid rgba(0, 229, 255, 0.2);
+            box-shadow: 0 15px 50px rgba(0,0,0,0.6), inset 0 0 20px rgba(0, 229, 255, 0.05);
+            transform-style: preserve-3d;
+            transition: transform 0.1s ease-out, box-shadow 0.3s ease;
+            position: relative;
+        }
+
+        .panel::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 2px;
+            background: linear-gradient(90deg, transparent, #00e5ff, transparent);
+            opacity: 0.5;
+        }
+
+        .input-glass {
+            width: 100%;
+            padding: 1rem;
+            background: rgba(2, 12, 27, 0.6);
+            border: 1px solid rgba(0, 229, 255, 0.2);
+            border-radius: 8px;
+            color: #00e5ff;
+            font-family: 'Orbitron', monospace;
+            font-size: 1rem;
+            letter-spacing: 0.05em;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        .input-glass:focus {
+            border-color: #00e5ff;
+            box-shadow: 0 0 15px rgba(0, 229, 255, 0.3);
+            background: rgba(2, 12, 27, 0.8);
+        }
+
+        .input-glass::placeholder {
+            color: rgba(0, 229, 255, 0.3);
+            font-family: 'Rajdhani', sans-serif;
+            text-transform: uppercase;
+        }
+
+        .btn-glass {
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+            background: rgba(0, 229, 255, 0.1);
+            border: 1px solid rgba(0, 229, 255, 0.4);
+            color: #00e5ff;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            font-weight: 700;
+            padding: 1rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 10px rgba(0,0,0,0.3);
+            cursor: pointer;
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .btn-glass:hover {
+            background: rgba(0, 229, 255, 0.2);
+            box-shadow: 0 0 20px rgba(0, 229, 255, 0.5);
+            text-shadow: 0 0 8px rgba(0, 229, 255, 0.8);
+            transform: translateY(-2px);
+        }
+
+        .input-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: rgba(230, 241, 255, 0.7);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            color: rgba(0, 229, 255, 0.6);
+            text-decoration: none;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-size: 0.85rem;
+            transition: color 0.2s;
+            margin-bottom: 1.5rem;
+        }
+        .back-link:hover {
+            color: #00e5ff;
+            text-shadow: 0 0 5px rgba(0, 229, 255, 0.5);
+        }
+
+        @media (max-width: 768px) {
+            .btn-glass {
+                min-height: 56px;
+            }
+            .input-glass {
+                min-height: 50px;
+            }
+        }
+    </style>
+</head>
+<body>
+    
+    <div class="hero-background"></div>
+
+    <div class="main-layout px-4">
+        <div class="panel p-8 md:p-10 w-full max-w-md tilt-panel" id="loginPanel">
+            <div style="transform: translateZ(20px);">
+                
+                <a href="/" class="back-link">
+                    <svg class="w-4 h-4 mr-2 -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                    ABORT LOGIN
+                </a>
+
+                <h2 class="text-3xl font-display font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-dominus-accent mb-6 uppercase tracking-widest text-center" style="filter: drop-shadow(0 0 10px rgba(0,229,255,0.3));">
+                    AUTH REQUIRED
+                </h2>
+                
+                {% if error %}
+                <div class="mb-6 p-4 bg-red-900/40 border border-red-500/50 rounded-lg text-red-400 text-sm font-mono text-center tracking-wider animate-pulse">
+                    [ {{ error | upper }} ]
+                </div>
+                {% endif %}
+                
+                <form method="POST" action="/login" class="space-y-6">
+                    <div>
+                        <label class="input-label">Operator ID</label>
+                        <input type="text" name="username" placeholder="Enter ID..." required autocomplete="off" class="input-glass">
+                    </div>
+                    
+                    <div>
+                        <label class="input-label">Access Code</label>
+                        <input type="password" name="password" placeholder="••••••••" required class="input-glass">
+                    </div>
+                    
+                    <div class="pt-4">
+                        <button type="submit" class="btn-glass">
+                            Authenticate
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <footer class="absolute bottom-6 text-center w-full" style="transform: translateZ(10px);">
+            <p class="text-xs tracking-widest text-dominus-accent opacity-30 font-mono">
+                ENCRYPTED CONNECTION ESTABLISHED
+            </p>
+        </footer>
+    </div>
+
+    <script>
+        // 3D Tilt Effect
+        const panel = document.getElementById('loginPanel');
+        let isMobile = window.innerWidth <= 768;
+
+        window.addEventListener('resize', () => {
+            isMobile = window.innerWidth <= 768;
+            if (isMobile) {
+                panel.style.transform = `perspective(1000px) rotateX(0) rotateY(0)`;
+            }
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (isMobile) return;
+            const xAxis = (window.innerWidth / 2 - e.pageX) / 50; 
+            const yAxis = (window.innerHeight / 2 - e.pageY) / 50; 
+            requestAnimationFrame(() => {
+                panel.style.transform = `perspective(1000px) rotateY(${xAxis}deg) rotateX(${yAxis}deg)`;
+            });
+        });
+
+        document.addEventListener('mouseleave', () => {
+            if (isMobile) return;
+            panel.style.transition = 'transform 0.5s ease';
+            panel.style.transform = `perspective(1000px) rotateY(0deg) rotateX(0deg)`;
+            setTimeout(() => {
+                panel.style.transition = 'transform 0.1s ease-out, box-shadow 0.3s ease';
+            }, 500);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control Panel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --primary: #3a86ff;
+            --secondary: #8338ec;
+            --accent: #ff006e;
+            --dark: #1a1a2e;
+            --darker: #16213e;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--dark);
+            color: white;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .glow {
+            box-shadow: 0 0 15px rgba(58, 134, 255, 0.5);
+        }
+        
+        .terminal-btn:hover {
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(58, 134, 255, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(58, 134, 255, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(58, 134, 255, 0); }
+        }
+        
+        .system-btn {
+            transition: all 0.3s ease;
+            background: linear-gradient(145deg, var(--darker), var(--dark));
+        }
+        
+        .system-btn:hover {
+            transform: scale(1.05);
+            background: linear-gradient(145deg, var(--dark), var(--darker));
+        }
+        
+        .progress-bar {
+            height: 6px;
+            border-radius: 3px;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .progress-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-6">
+    <div class="max-w-6xl mx-auto flex flex-col md:flex-row min-h-screen relative">
+        <div class="w-full md:w-1/2 pr-0 md:pr-8 pt-8">
+            <!-- Terminal Button -->
+            <div class="flex justify-center md:justify-end mb-6 md:mb-0">
+                <button
+                  id="terminalBtn"
+                  class="terminal-btn px-6 py-2 rounded-full
+                         bg-gradient-to-r from-blue-500 to-purple-600
+                         text-white font-medium flex items-center space-x-2
+                         md:absolute md:right-0 md:top-6">
+                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                     <path fill-rule="evenodd" d="M3 5a2 2 0 012-2h10a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V5zm2.5 3a1.5 1.5 0 100 3 1.5 1.5 0 000-3zm4 0a1.5 1.5 0 100 3 1.5 1.5 0 000-3zm4 0a1.5 1.5 0 100 3 1.5 1.5 0 000-3z" clip-rule="evenodd" />
+                 </svg>
+                 <span>TERMINAL</span>
+                 </button>
+            </div>
+
+        <!-- Header -->
+        <div class="flex justify-center items-center mb-8">
+            <div class="text-center">
+                <h1 class="text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">CONTROL PANEL</h1>
+                <p class="text-gray-400">Real-time monitoring & management</p>
+            </div>
+        </div>
+        
+        <div class="grid grid-cols-1 gap-6 mb-8">
+            <!-- CPU Card -->
+            <div class="stat-card bg-gray-800 rounded-xl p-6 transition-all duration-300 hover:glow">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h3 class="text-gray-400 font-medium">CPU USAGE</h3>
+                        <h2 class="text-3xl font-bold mt-2" id="cpuPercent">32%</h2>
+                    </div>
+                    <div class="bg-blue-900 bg-opacity-30 p-3 rounded-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M13 7H7v6h6V7z" />
+                            <path fill-rule="evenodd" d="M7 2a1 1 0 012 0v1h2V2a1 1 0 112 0v1h2a2 2 0 012 2v2h1a1 1 0 110 2h-1v2h1a1 1 0 110 2h-1v2a2 2 0 01-2 2h-2v1a1 1 0 11-2 0v-1H9v1a1 1 0 11-2 0v-1H5a2 2 0 01-2-2v-2H2a1 1 0 110-2h1V9H2a1 1 0 010-2h1V5a2 2 0 012-2h2V2zM5 5h10v10H5V5z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="mt-6">
+                    <div class="progress-bar">
+                        <div class="progress-fill bg-blue-500" style="width: 32%" id="cpuBar"></div>
+                    </div>
+                    <div class="flex justify-between text-xs text-gray-400 mt-1">
+                        <span>0%</span>
+                        <span>100%</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- RAM Card -->
+            <div class="stat-card bg-gray-800 rounded-xl p-6 transition-all duration-300 hover:glow">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h3 class="text-gray-400 font-medium">MEMORY USAGE</h3>
+                        <h2 class="text-3xl font-bold mt-2" id="ramPercent">64%</h2>
+                    </div>
+                    <div class="bg-purple-900 bg-opacity-30 p-3 rounded-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-purple-400" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="mt-6">
+                    <div class="progress-bar">
+                        <div class="progress-fill bg-purple-500" style="width: 64%" id="ramBar"></div>
+                    </div>
+                    <div class="flex justify-between text-xs text-gray-400 mt-1">
+                        <span>0%</span>
+                        <span>100%</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Storage Card -->
+            <div class="stat-card bg-gray-800 rounded-xl p-6 transition-all duration-300 hover:glow">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h3 class="text-gray-400 font-medium">STORAGE</h3>
+                        <h2 class="text-3xl font-bold mt-2" id="storagePercent">78%</h2>
+                    </div>
+                    <div class="bg-pink-900 bg-opacity-30 p-3 rounded-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-pink-400" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="mt-6">
+                    <div class="progress-bar">
+                        <div class="progress-fill bg-pink-500" style="width: 78%" id="storageBar"></div>
+                    </div>
+                    <div class="flex justify-between text-xs text-gray-400 mt-1">
+                        <span>0%</span>
+                        <span>100%</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Network Card -->
+            <div class="stat-card bg-gray-800 rounded-xl p-6 transition-all duration-300 hover:glow">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h3 class="text-gray-400 font-medium">NETWORK</h3>
+                        <h2 class="text-3xl font-bold mt-2" id="networkState">Online</h2>
+                    </div>
+                    <div class="bg-green-900 bg-opacity-30 p-3 rounded-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M2 5a2 2 0 012-2h12a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V5zm3.293 1.293a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 01-1.414-1.414L7.586 10 5.293 7.707a1 1 0 010-1.414zM11 12a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="mt-6">
+                    <div class="flex items-center justify-between">
+                        <div class="text-sm">
+                            <span class="text-gray-400">Up:</span>
+                            <span class="ml-2" id="networkUp">12.4 Mbps</span>
+                        </div>
+                        <div class="text-sm">
+                            <span class="text-gray-400">Down:</span>
+                            <span class="ml-2" id="networkDown">45.6 Mbps</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        </div>
+        <!-- System Buttons -->
+        <div class="w-full md:w-1/2 flex flex-col justify-center py-12 mt-12 md:mt-0">
+            <div class="flex flex-col gap-8 w-full max-w-xs mx-auto">
+                <button
+                   id="system1-btn"
+                   class="system-btn min-h-[180px] rounded-xl p-8 shadow-lg text-center flex flex-col items-center justify-center group"
+                   data-system="system1">
+                    <div class="bg-blue-900 bg-opacity-20 p-5 rounded-full mb-4 group-hover:bg-opacity-30 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10a1 1 0 01-1.64 0l-7-10A1 1 0 014 7h4V2a1 1 0 011.3-.954z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">SYSTEM 1</h3>
+                    <p class="text-gray-400">Primary control system</p>
+                    <div class="mt-4 text-xs text-blue-400 flex items-center">
+                        <div class="status-indicator w-2 h-2 bg-gray-500 rounded-full mr-2"></div>
+                        <span class="status-text">UNKNOWN</span>
+                    </div>
+                </button>
+                
+                <button
+                   id="system2-btn"
+                   class="system-btn min-h-[180px] rounded-xl p-8 shadow-lg text-center flex flex-col items-center justify-center group"
+                   data-system="system2">
+
+                    <div class="bg-purple-900 bg-opacity-20 p-5 rounded-full mb-4 group-hover:bg-opacity-30 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-purple-400" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10a1 1 0 01-1.64 0l-7-10A1 1 0 014 7h4V2a1 1 0 011.3-.954z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">SYSTEM 2</h3>
+                    <p class="text-gray-400">Secondary control system</p>
+                    <div class="mt-4 text-xs text-blue-400 flex items-center">
+                           <div class="status-indicator w-2 h-2 bg-gray-500 rounded-full mr-2"></div>
+                           <span class="status-text">UNKNOWN</span>
+                           </div>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+<script>
+// Connect to SocketIO
+const socket = io();
+
+// Terminal button
+document.getElementById('terminalBtn').addEventListener('click', function() {
+    window.location.href = '/terminal';
+});
+
+// System button actions
+// System button actions
+document.querySelectorAll('.system-btn').forEach(button => {
+    button.addEventListener('click', function() {
+        const system = this.dataset.system;
+
+        // Navigate instantly
+        window.location.href = `/${system}`;
+       // Fire-and-forget backend update
+       fetch(`/api/select_system/${system}`).catch(() => {});
+
+    });
+});
+// Update stats function
+function updateStats() {
+    fetch('/api/stats')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById("cpuPercent").textContent = data.cpu;
+            document.getElementById("ramPercent").textContent = data.ram;
+            document.getElementById("storagePercent").textContent = data.storage || "N/A";
+            document.getElementById("networkUp").textContent = data.net_sent;
+            document.getElementById("networkDown").textContent = data.net_recv;
+            
+            // Update progress bars
+            document.getElementById("cpuBar").style.width = data.cpu;
+            document.getElementById("ramBar").style.width = data.ram;
+            document.getElementById("storageBar").style.width = data.storage;
+        })
+        .catch(err => console.error("Error fetching stats:", err));
+}
+
+// Start polling
+updateStats();
+setInterval(updateStats, window.innerWidth < 768 ? 4000 : 2000);
+
+// Handle system state updates
+socket.on('system_state', function(state) {
+
+    // ===== SYSTEM 1 =====
+    const sys1Btn = document.getElementById('system1-btn');
+    const sys1Dot = sys1Btn.querySelector('.status-indicator');
+    const sys1Text = sys1Btn.querySelector('.status-text');
+
+    if (state.system1.power) {
+        sys1Dot.className = 'status-indicator w-2 h-2 bg-green-500 rounded-full mr-2';
+        sys1Text.textContent = 'ONLINE';
+    } else {
+        sys1Dot.className = 'status-indicator w-2 h-2 bg-gray-500 rounded-full mr-2';
+        sys1Text.textContent = 'OFFLINE';
+    }
+    if (state.system1.mode === 'local') {
+        sys1Text.textContent = `${sys1Text.textContent} - LOCAL MODE`;
+        sys1Btn.classList.add('border', 'border-yellow-500');
+    } else {
+        sys1Btn.classList.remove('border', 'border-yellow-500');
+    }
+
+    // ===== SYSTEM 2 =====
+    const sys2Btn = document.getElementById('system2-btn');
+    const sys2Dot = sys2Btn.querySelector('.status-indicator');
+    const sys2Text = sys2Btn.querySelector('.status-text');
+
+    if (state.system2.power) {
+        sys2Dot.className = 'status-indicator w-2 h-2 bg-green-500 rounded-full mr-2';
+        sys2Text.textContent = 'ONLINE';
+    } else {
+        sys2Dot.className = 'status-indicator w-2 h-2 bg-gray-500 rounded-full mr-2';
+        sys2Text.textContent = 'OFFLINE';
+    }
+    if (state.system2.mode === 'local') {
+        sys2Text.textContent = `${sys2Text.textContent} - LOCAL MODE`;
+        sys2Btn.classList.add('border', 'border-yellow-500');
+    } else {
+        sys2Btn.classList.remove('border', 'border-yellow-500');
+    }
+});
+</script>
+</body>
+</html>
