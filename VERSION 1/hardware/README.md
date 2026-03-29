@@ -13,7 +13,7 @@ The hardware went through **3 major iterations** before reaching the current sta
 ## 📦 Version 1 — First Build (White Button Panel)
 
 <div align="center">
-<img src="v1_front.jpg" alt="assests/version 1.jpg" width="350"/>
+<img src="../assest/version 1.jpg" alt="Version 1 Front Panel" width="350"/>
 </div>
 
 ### What Was Built
@@ -45,7 +45,7 @@ This caused the controller to randomly pick up **ghost signals** — triggering 
 ## 📦 Version 2 — New Switch Panels
 
 <div align="center">
-<img src="v2_back.jpg" alt="Version 2 Back Panel with Wiring" width="350"/>
+<img src="../assest/version 2.jpg" alt="Version 2 Back Panel with Wiring" width="350"/>
 </div>
 
 ### What Changed
@@ -65,7 +65,7 @@ This confirmed it — the problem was electrical, not mechanical.
 ## 📦 Version 3 — DPDT Switches + Optocouplers (Current Build)
 
 <div align="center">
-<img src="v3_side.jpg" alt="Version 3 Final Build" width="350"/>
+<img src="../assest/version 3.jpg" alt="Version 3 Final Build" width="350"/>
 </div>
 
 ### The Real Fix — Rethinking the Architecture
