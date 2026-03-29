@@ -65,7 +65,7 @@ This confirmed it — the problem was electrical, not mechanical.
 ## 📦 Version 3 — DPDT Switches + Optocouplers (Current Build)
 
 <div align="center">
-<img src="../assests/version 3.jpge" alt="Version 3 Final Build" width="350"/>
+<img src="../assests/version 3.jpeg" alt="Version 3 Final Build" width="350"/>
 </div>
 
 ### The Real Fix — Rethinking the Architecture
