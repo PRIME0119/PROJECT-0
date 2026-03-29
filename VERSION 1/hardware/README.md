@@ -13,7 +13,7 @@ The hardware went through **3 major iterations** before reaching the current sta
 ## 📦 Version 1 — First Build (White Button Panel)
 
 <div align="center">
-<img src="v1_front.jpg" alt="Version 1 Front Panel" width="350"/>
+<img src="v1_front.jpg" alt="assests/version 1.jpg" width="350"/>
 </div>
 
 ### What Was Built
