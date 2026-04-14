@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Control Panel | Project 0 Version 1</title>
+    
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/output.css') }}">
+    <script>
+        // Check theme immediately to prevent flash
+        if(localStorage.getItem('theme') === 'light') {
+            document.documentElement.classList.add('light-theme');
+        }
+
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Poppins', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        :root {
+            --glass-bg: rgba(20, 30, 45, 0.35);
+            --glass-border: 1px solid rgba(255, 255, 255, 0.08);
+            --glass-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+            --text-main: #ffffff;
+            --text-muted: #9ca3af;
+            --bg-1: #0f172a;
+            --bg-2: #1e293b;
+            --bg-3: #1e0338;
+            --orb-1: bg-indigo-500;
+            --orb-2: bg-purple-500;
+            --glass-panel-bg: rgba(20, 30, 45, 0.45); /* softer gray */
+        }
+
+        html.light-theme {
+            --glass-bg: rgba(255, 255, 255, 0.45);
+            --glass-border: 1px solid rgba(255, 255, 255, 0.8);
+            --glass-shadow: 0 20px 50px rgba(100, 150, 255, 0.15);
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --bg-1: #e0f2fe; /* sky-100 */
+            --bg-2: #f0f9ff; /* sky-50 */
+            --bg-3: #bae6fd; /* sky-200 */ 
+            --glass-panel-bg: rgba(255, 255, 255, 0.5);
+        }
+
+        body {
+            font-family: system-ui, sans-serif;
+            background: linear-gradient(-45deg, var(--bg-1), var(--bg-2), var(--bg-3), var(--bg-1));
+            background-size: 400% 400%;
+            color: var(--text-main);
+            animation: gradientBG 15s ease infinite;
+            min-height: 100vh; /* Fallback */
+            min-height: 100dvh;
+            overflow-x: hidden;
+            perspective: 1200px;
+            transition: background 0.8s ease, color 0.8s ease;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50% }
+            50% { background-position: 100% 50% }
+            100% { background-position: 0% 50% }
+        }
+
+        .glass-panel {
+            background: var(--glass-panel-bg);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: var(--glass-border);
+            border-radius: 16px;
+            box-shadow: var(--glass-shadow);
+            transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.6s ease, background 0.8s ease, border 0.8s ease;
+            transform-style: preserve-3d;
+            color: var(--text-main);
+        }
+
+        .stat-card {
+            animation: fadeIn 0.8s ease-out;
+            position: relative;
+        }
+        
+        .stat-card h3 { color: var(--text-muted); }
+        .stat-card .text-xs { color: var(--text-muted); text-shadow: none; }
+
+        .stat-card:hover {
+            transform: translateZ(15px) rotateX(2deg) rotateY(1deg);
+            box-shadow: 0 15px 35px rgba(99, 102, 241, 0.2);
+        }
+        
+        html.light-theme .stat-card:hover {
+            box-shadow: 0 15px 35px rgba(59, 130, 246, 0.3);
+        }
+
+        .system-btn {
+            background: linear-gradient(145deg, rgba(31,41,55,0.4), rgba(17,24,39,0.5));
+            border: var(--glass-border);
+            backdrop-filter: blur(24px);
+            transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            color: var(--text-main);
+            border-radius: 16px;
+        }
+        
+        html.light-theme .system-btn {
+            background: linear-gradient(145deg, rgba(255,255,255,0.6), rgba(240,249,255,0.6));
+            border: 1px solid rgba(255, 255, 255, 0.8);
+        }
+
+        .system-btn:hover {
+            transform: translateZ(30px) translateY(-5px) scale(1.02);
+            box-shadow: 0 25px 50px rgba(139, 92, 246, 0.3);
+        }
+        
+        html.light-theme .system-btn:hover {
+            box-shadow: 0 25px 50px rgba(59, 130, 246, 0.3);
+        }
+
+        .system-btn.border-yellow-500 {
+            background: linear-gradient(135deg, #6c4cff, #9c6dff) !important;
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.3), 0 0 80px rgba(120, 90, 255, 0.4) !important;
+            border-radius: 16px;
+            color: white; /* Keep white even in light mode for the glowing button */
+        }
+
+        .progress-bar {
+            height: 6px;
+            border-radius: 3px;
+            background-color: rgba(128, 128, 128, 0.2);
+            overflow: hidden;
+            transform: translateZ(5px);
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.5s ease;
+            box-shadow: 0 0 10px currentColor;
+        }
+
+        .btn-float {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: var(--glass-border);
+            border-radius: 50px;
+            color: var(--text-main);
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform: translateZ(10px);
+            animation: fadeIn 0.8s ease-out;
+            cursor: pointer;
+        }
+        
+        .btn-float:hover {
+            background: rgba(255,255,255,0.2);
+            box-shadow: 0 10px 25px rgba(139, 92, 246, 0.5);
+            transform: translateZ(25px) translateY(-2px);
+        }
+
+        html.light-theme .btn-float:hover {
+            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.4);
+        }
+
+        /* Particles only visible in light theme */
+        .snow-particle {
+            display: none;
+            position: fixed;
+            background: white;
+            border-radius: 50%;
+            pointer-events: none;
+            box-shadow: 0 0 10px white;
+            z-index: -1;
+            animation: fall linear infinite;
+        }
+        html.light-theme .snow-particle {
+            display: block;
+        }
+
+        @keyframes fall {
+            to { transform: translateY(100vh) rotate(360deg); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+    </style>
+</head>
+<body class="min-h-screen p-2 md:p-6 overflow-hidden">
+    <!-- Particles Container -->
+    <div id="particles-container"></div>
+
+    <!-- Animated background elements (mouse tracking orbs) -->
+    <div class="fixed inset-0 overflow-hidden -z-20 transition-colors duration-700">
+        <!-- Using custom logic to switch orb colors in light theme below -->
+        <div id="orb1" class="bg-element-1 absolute w-64 h-64 rounded-full bg-indigo-500 opacity-20 blur-3xl -top-32 -left-32 transition-colors duration-700"></div>
+        <div id="orb2" class="bg-element-2 absolute w-96 h-96 rounded-full bg-purple-500 opacity-20 blur-3xl -bottom-32 -right-32 transition-colors duration-700"></div>
+    </div>
+    
+    <!-- Float buttons container (Split into top-left and top-right) -->
+    <!-- Terminal (Top Left) -->
+    <div class="fixed top-4 left-4 z-50">
+        <button
+            id="terminalBtn"
+            class="btn-float px-3 py-2 md:px-6 md:py-2 flex items-center space-x-1 md:space-x-2 font-medium">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 md:h-5 md:w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M3 5a2 2 0 012-2h10a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V5zm2.5 3a1.5 1.5 0 100 3 1.5 1.5 0 000-3zm4 0a1.5 1.5 0 100 3 1.5 1.5 0 000-3zm4 0a1.5 1.5 0 100 3 1.5 1.5 0 000-3z" clip-rule="evenodd" />
+            </svg>
+            <span class="text-[10px] md:text-base hidden sm:inline-block">TERMINAL</span>
+        </button>
+    </div>
+
+    <!-- Theme Toggle (Top Right) -->
+    <div class="fixed top-4 right-4 z-50">
+        <button
+            id="themeToggleBtn"
+            class="btn-float px-3 py-2 md:px-4 md:py-2 flex items-center justify-center space-x-2 font-medium">
+            <svg id="moon-icon" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 md:h-5 md:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+            </svg>
+            <svg id="sun-icon" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 md:h-5 md:w-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+        </button>
+    </div>
+    
+    <div class="max-w-6xl mx-auto flex flex-col md:flex-row min-h-[100dvh] relative gap-2 md:gap-0 justify-center items-center">
+        <div class="w-full md:w-1/2 pr-0 md:pr-8 pt-4 md:pt-8 flex flex-col justify-center" style="transform-style: preserve-3d">
+        <!-- Header -->
+        <div class="flex justify-center items-center mb-2 md:mb-8 md:col-span-1">
+            <div class="text-center transform translate-z-20">
+                <h1 id="main-title" class="text-xl md:text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent transition-colors duration-700">CONTROL CONSOLE</h1>
+                <p class="text-muted text-[10px] md:text-base mt-1 md:mt-2">Project 0 Version 1</p>
+            </div>
+        </div>
+        
+        <div class="grid grid-cols-2 gap-2 md:gap-6 mb-2 md:mb-8 transform translate-z-10">
+            <!-- CPU Card -->
+            <div class="glass-panel stat-card p-3 md:p-6 aspect-[4/3] md:aspect-square max-h-[180px] md:max-h-[220px]">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h3 class="font-medium text-sm md:text-base">CPU USAGE</h3>
+                        <h2 class="text-2xl md:text-3xl font-bold mt-2" id="cpuPercent">--%</h2>
+                    </div>
+                    <div class="bg-blue-900 bg-opacity-30 p-2 md:p-3 rounded-lg text-blue-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 md:h-8 md:w-8" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M13 7H7v6h6V7z" />
+                            <path fill-rule="evenodd" d="M7 2a1 1 0 012 0v1h2V2a1 1 0 112 0v1h2a2 2 0 012 2v2h1a1 1 0 110 2h-1v2h1a1 1 0 110 2h-1v2a2 2 0 01-2 2h-2v1a1 1 0 11-2 0v-1H9v1a1 1 0 11-2 0v-1H5a2 2 0 01-2-2v-2H2a1 1 0 110-2h1V9H2a1 1 0 010-2h1V5a2 2 0 012-2h2V2zM5 5h10v10H5V5z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="mt-auto pt-2 md:pt-4">
+                    <div class="progress-bar">
+                        <div class="progress-fill bg-blue-500" style="width: 0%" id="cpuBar"></div>
+                    </div>
+                    <div class="flex justify-between text-[10px] md:text-xs mt-1">
+                        <span>0%</span>
+                        <span>100%</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- RAM Card -->
+            <div class="glass-panel stat-card p-3 md:p-6 aspect-[4/3] md:aspect-square max-h-[180px] md:max-h-[220px]">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h3 class="font-medium text-sm md:text-base">MEMORY</h3>
+                        <h2 class="text-2xl md:text-3xl font-bold mt-2" id="ramPercent">--%</h2>
+                    </div>
+                    <div class="bg-purple-900 bg-opacity-30 p-2 md:p-3 rounded-lg text-purple-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 md:h-8 md:w-8" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="mt-auto pt-2 md:pt-4">
+                    <div class="progress-bar">
+                        <div class="progress-fill bg-purple-500" style="width: 0%" id="ramBar"></div>
+                    </div>
+                    <div class="flex justify-between text-[10px] md:text-xs mt-1">
+                        <span>0%</span>
+                        <span>100%</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Temperature Card -->
+            <div class="glass-panel stat-card p-3 md:p-6 aspect-[4/3] md:aspect-square max-h-[180px] md:max-h-[220px]">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h3 class="font-medium text-sm md:text-base">TEMP</h3>
+                        <h2 class="text-2xl md:text-3xl font-bold mt-2" id="temperaturePercent">N/A</h2>
+                    </div>
+                    <div class="bg-red-900 bg-opacity-30 p-2 md:p-3 rounded-lg text-red-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 md:h-8 md:w-8" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M12 2C10.8954 2 10 2.89543 10 4V12.5351C8.8359 13.2261 8 14.5194 8 16C8 18.2091 9.79086 20 12 20C14.2091 20 16 18.2091 16 16C16 14.5194 15.1641 13.2261 14 12.5351V4C14 2.89543 13.1046 2 12 2Z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="mt-auto pt-2 md:pt-4">
+                    <div class="progress-bar">
+                        <div class="progress-fill bg-red-500" style="width: 0%" id="temperatureBar"></div>
+                    </div>
+                    <div class="flex justify-between text-[10px] md:text-xs mt-1">
+                        <span>0°C</span>
+                        <span>100°C</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Network Card -->
+            <div class="glass-panel stat-card p-3 md:p-6 aspect-[4/3] md:aspect-square max-h-[180px] md:max-h-[220px]">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h3 class="font-medium text-sm md:text-base">NETWORK</h3>
+                        <h2 class="text-lg md:text-2xl font-bold mt-2 text-emerald-400" id="networkState">Online</h2>
+                    </div>
+                    <div class="bg-green-900 bg-opacity-30 p-2 md:p-3 rounded-lg text-emerald-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 md:h-8 md:w-8" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M2 5a2 2 0 012-2h12a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V5zm3.293 1.293a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 01-1.414-1.414L7.586 10 5.293 7.707a1 1 0 010-1.414zM11 12a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="mt-auto pt-2 md:pt-4">
+                    <div class="flex flex-col text-[10px] md:text-sm">
+                        <div class="flex justify-between">
+                            <span class="opacity-70">Up:</span>
+                            <span class="ml-2 font-mono" id="networkUp">--</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="opacity-70">Down:</span>
+                            <span class="ml-2 font-mono" id="networkDown">--</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        </div>
+        <!-- System Buttons -->
+        <div class="w-full md:w-1/2 flex flex-col justify-center pb-8 md:pb-12 mt-2 md:mt-0" style="transform-style: preserve-3d">
+            <div class="flex flex-row md:flex-col gap-3 md:gap-8 w-full max-w-full md:max-w-xs mx-auto transform translate-z-10 px-2 md:px-0">
+                <button
+                   id="system1-btn"
+                   class="system-btn flex-1 min-h-[140px] md:min-h-[180px] p-3 md:p-8 text-center flex flex-col items-center justify-center group"
+                   data-system="system1">
+                    <div class="bg-blue-900 bg-opacity-20 p-3 md:p-5 rounded-full mb-2 md:mb-4 group-hover:bg-opacity-30 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 md:h-12 md:w-12 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10a1 1 0 01-1.64 0l-7-10A1 1 0 014 7h4V2a1 1 0 011.3-.954z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <h3 class="text-sm md:text-xl font-bold mb-1 md:mb-2">SYSTEM 1</h3>
+                    <p class="text-muted text-[10px] md:text-sm leading-tight">Primary control</p>
+                    <div class="mt-2 md:mt-4 text-[10px] md:text-xs font-semibold flex flex-col md:flex-row items-center bg-black bg-opacity-20 px-2 md:px-3 py-1 rounded-lg md:rounded-full w-full justify-center">
+                        <div class="status-indicator w-2 h-2 bg-gray-500 rounded-full md:mr-2 mb-1 md:mb-0"></div>
+                        <span class="status-text uppercase text-gray-400">UNKNOWN</span>
+                    </div>
+                </button>
+                
+                <button
+                   id="system2-btn"
+                   class="system-btn flex-1 min-h-[140px] md:min-h-[180px] p-3 md:p-8 text-center flex flex-col items-center justify-center group"
+                   data-system="system2">
+                    <div class="bg-purple-900 bg-opacity-20 p-3 md:p-5 rounded-full mb-2 md:mb-4 group-hover:bg-opacity-30 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 md:h-12 md:w-12 text-purple-500" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10a1 1 0 01-1.64 0l-7-10A1 1 0 014 7h4V2a1 1 0 011.3-.954z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <h3 class="text-sm md:text-xl font-bold mb-1 md:mb-2">SYSTEM 2</h3>
+                    <p class="text-muted text-[10px] md:text-sm leading-tight">Secondary control</p>
+                    <div class="mt-2 md:mt-4 text-[10px] md:text-xs font-semibold flex flex-col md:flex-row items-center bg-black bg-opacity-20 px-2 md:px-3 py-1 rounded-lg md:rounded-full w-full justify-center">
+                        <div class="status-indicator w-2 h-2 bg-gray-500 rounded-full md:mr-2 mb-1 md:mb-0"></div>
+                        <span class="status-text uppercase text-gray-400">UNKNOWN</span>
+                    </div>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/socket.io.min.js') }}"></script>
+<script>
+// ----- GLobal Theme Logic -----
+const themeBtn = document.getElementById('themeToggleBtn');
+const moonIcon = document.getElementById('moon-icon');
+const sunIcon = document.getElementById('sun-icon');
+const orb1 = document.getElementById('orb1');
+const orb2 = document.getElementById('orb2');
+const mainTitle = document.getElementById('main-title');
+
+function updateThemeUI(isLight) {
+    if(isLight) {
+        moonIcon.classList.add('hidden');
+        sunIcon.classList.remove('hidden');
+        // Brighten Orbs & Title for winter preset
+        orb1.classList.remove('bg-indigo-500'); orb1.classList.add('bg-blue-300');
+        orb2.classList.remove('bg-purple-500'); orb2.classList.add('bg-cyan-300');
+        mainTitle.classList.remove('from-blue-400', 'to-purple-500');
+        mainTitle.classList.add('from-blue-500', 'to-cyan-400');
+    } else {
+        sunIcon.classList.add('hidden');
+        moonIcon.classList.remove('hidden');
+        // Restore Dark mode Orbs & Title
+        orb1.classList.remove('bg-blue-300'); orb1.classList.add('bg-indigo-500');
+        orb2.classList.remove('bg-cyan-300'); orb2.classList.add('bg-purple-500');
+        mainTitle.classList.remove('from-blue-500', 'to-cyan-400');
+        mainTitle.classList.add('from-blue-400', 'to-purple-500');
+    }
+}
+
+// Initial set based on localStorage
+const isLight = document.documentElement.classList.contains('light-theme');
+updateThemeUI(isLight);
+
+themeBtn.addEventListener('click', () => {
+    document.documentElement.classList.toggle('light-theme');
+    const currentlyLight = document.documentElement.classList.contains('light-theme');
+    localStorage.setItem('theme', currentlyLight ? 'light' : 'dark');
+    updateThemeUI(currentlyLight);
+});
+
+// Particles generating logic
+function createParticles() {
+    const container = document.getElementById('particles-container');
+    for (let i = 0; i < 50; i++) {
+        let p = document.createElement('div');
+        p.classList.add('snow-particle');
+        p.style.width = Math.random() * 5 + 2 + 'px';
+        p.style.height = p.style.width;
+        p.style.left = Math.random() * 100 + 'vw';
+        p.style.top = -10 + 'px';
+        p.style.opacity = Math.random();
+        p.style.animationDuration = Math.random() * 8 + 4 + 's';
+        p.style.animationDelay = Math.random() * 5 + 's';
+        container.appendChild(p);
+    }
+}
+createParticles();
+
+
+// ----- Application Logic -----
+const socket = io({ transports: ['polling', 'websocket'] });
+
+// Terminal button
+document.getElementById('terminalBtn').addEventListener('click', function() {
+    window.location.href = '/terminal';
+});
+
+// System button actions
+document.querySelectorAll('.system-btn').forEach(button => {
+    button.addEventListener('click', function() {
+        const system = this.dataset.system;
+        window.location.href = `/${system}`;
+        fetch(`/api/select_system/${system}`).catch(() => {});
+    });
+});
+
+// Update stats function
+function updateStats() {
+    fetch('/api/stats')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById("cpuPercent").textContent = data.cpu;
+            document.getElementById("ramPercent").textContent = data.ram;
+            document.getElementById("temperaturePercent").textContent = data.temperature || "N/A";
+            document.getElementById("networkState").textContent = data.net_state || "Online";
+            document.getElementById("networkUp").textContent = data.net_sent;
+            document.getElementById("networkDown").textContent = data.net_recv;
+            
+            document.getElementById("cpuBar").style.width = data.cpu;
+            document.getElementById("ramBar").style.width = data.ram;
+            document.getElementById("temperatureBar").style.width = data.temp_pct || "0%";
+        })
+        .catch(err => console.error("Error fetching stats:", err));
+}
+
+updateStats();
+setInterval(updateStats, window.innerWidth < 768 ? 4000 : 2000);
+
+socket.on('system_state', function(state) {
+    // SYSTEM 1
+    const sys1Btn = document.getElementById('system1-btn');
+    const sys1Dot = sys1Btn.querySelector('.status-indicator');
+    const sys1Text = sys1Btn.querySelector('.status-text');
+
+    if (state.system1.power) {
+        sys1Dot.className = 'status-indicator w-2 h-2 bg-emerald-500 rounded-full mr-2 shadow-[0_0_8px_#10b981] animate-pulse';
+        sys1Text.textContent = 'ONLINE';
+        sys1Text.className = 'status-text uppercase text-emerald-500';
+    } else {
+        sys1Dot.className = 'status-indicator w-2 h-2 bg-gray-500 rounded-full mr-2';
+        sys1Text.textContent = 'OFFLINE';
+        sys1Text.className = 'status-text uppercase text-gray-500 font-semibold';
+    }
+    if (state.system1.mode === 'local') {
+        sys1Text.textContent = `${sys1Text.textContent} - LOCAL`;
+        sys1Btn.classList.add('border-yellow-500');
+        sys1Text.className = 'status-text uppercase text-yellow-300 font-bold';
+    } else {
+        sys1Btn.classList.remove('border-yellow-500');
+    }
+
+    // SYSTEM 2
+    const sys2Btn = document.getElementById('system2-btn');
+    const sys2Dot = sys2Btn.querySelector('.status-indicator');
+    const sys2Text = sys2Btn.querySelector('.status-text');
+
+    if (state.system2.power) {
+        sys2Dot.className = 'status-indicator w-2 h-2 bg-emerald-500 rounded-full mr-2 shadow-[0_0_8px_#10b981] animate-pulse';
+        sys2Text.textContent = 'ONLINE';
+        sys2Text.className = 'status-text uppercase text-emerald-500';
+    } else {
+        sys2Dot.className = 'status-indicator w-2 h-2 bg-gray-500 rounded-full mr-2';
+        sys2Text.textContent = 'OFFLINE';
+        sys2Text.className = 'status-text uppercase text-gray-500 font-semibold';
+    }
+    if (state.system2.mode === 'local') {
+        sys2Text.textContent = `${sys2Text.textContent} - LOCAL`;
+        sys2Btn.classList.add('border-yellow-500');
+        sys2Text.className = 'status-text uppercase text-yellow-300 font-bold';
+    } else {
+        sys2Btn.classList.remove('border-yellow-500');
+    }
+});
+</script>
+
+<script>
+    // Mouse interactive background
+    document.addEventListener('mousemove', (e) => {
+        const mouseX = e.clientX / window.innerWidth;
+        const mouseY = e.clientY / window.innerHeight;
+        
+        const bg1 = document.querySelector('.bg-element-1');
+        const bg2 = document.querySelector('.bg-element-2');
+        
+        if (bg1 && bg2) {
+            bg1.style.transform = `translate(${mouseX * 100 - 50}px, ${mouseY * 100 - 50}px)`;
+            bg2.style.transform = `translate(${mouseX * -100 + 50}px, ${mouseY * -100 + 50}px)`;
+        }
+    });
+
+    // 3D Tilt effect for stat cards
+    document.querySelectorAll('.stat-card').forEach(card => {
+        card.addEventListener('mousemove', (e) => {
+            const rect = card.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+            // Dampen rotation slightly
+            const rotateX = (y - centerY) / 30;
+            const rotateY = (centerX - x) / 30;
+            card.style.transform = `translateZ(15px) perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+        });
+        card.addEventListener('mouseleave', () => {
+            card.style.transform = '';
+        });
+    });
+</script>
+</body>
+</html>
