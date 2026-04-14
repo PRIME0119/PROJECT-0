@@ -1,0 +1,17 @@
+{
+  "name": "WEB1",
+  "version": "1.0.0",
+  "description": "A Raspberry Pi-based controller for managing two motherboard systems with hard drive switching.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "autoprefixer": "^10.5.0",
+    "postcss": "^8.5.9",
+    "tailwindcss": "^3.4.17"
+  }
+}

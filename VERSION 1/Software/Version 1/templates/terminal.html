@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Web Terminal | DOMINUS</title>
+    
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/output.css') }}">
+    <script src="{{ url_for('static', filename='js/socket.io.min.js') }}"></script>
+    <script>
+        // Check theme immediately to prevent flash
+        if(localStorage.getItem('theme') === 'light') {
+            document.documentElement.classList.add('light-theme');
+        }
+    </script>
+    
+    <style>
+        :root {
+            --glass-bg: rgba(20, 30, 45, 0.35);
+            --glass-border: 1px solid rgba(255, 255, 255, 0.08);
+            --glass-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+            --accent-violet: #8b5cf6;
+            --text-main: #ffffff;
+            --text-muted: rgba(255, 255, 255, 0.7);
+            --bg-1: #0f172a;
+            --bg-2: #1e293b;
+            --bg-3: #1e0338;
+            --orb-1: #6366f1; /* indigo-500 */
+            --orb-2: #a855f7; /* purple-500 */
+            --term-bg: rgba(10, 15, 25, 0.7);
+            --input-bg: rgba(30, 30, 40, 0.8);
+        }
+
+        html.light-theme {
+            --glass-bg: rgba(255, 255, 255, 0.45);
+            --glass-border: 1px solid rgba(255, 255, 255, 0.8);
+            --glass-shadow: 0 20px 50px rgba(100, 150, 255, 0.15);
+            --accent-violet: #3b82f6; /* bright blue */
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --bg-1: #e0f2fe; /* sky-100 */
+            --bg-2: #f0f9ff; /* sky-50 */
+            --bg-3: #bae6fd;
+            --orb-1: #93c5fd; /* blue-300 */
+            --orb-2: #67e8f9; /* cyan-300 */
+            --term-bg: rgba(255, 255, 255, 0.8);
+            --input-bg: rgba(240, 248, 255, 0.9);
+        }
+
+        body {
+            font-family: system-ui, sans-serif;
+            background: linear-gradient(-45deg, var(--bg-1), var(--bg-2), var(--bg-3), var(--bg-1));
+            background-size: 400% 400%;
+            min-height: 100dvh;
+            height: calc(var(--vh, 1vh) * 100);
+            margin: 0;
+            padding: 0;
+            overflow: hidden; /* Fix layout jumping on mobile */
+            animation: gradientBG 15s ease infinite;
+            color: var(--text-main);
+            transition: background 0.8s ease, color 0.8s ease;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .main-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            margin: 0 auto;
+            position: relative;
+            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+            overflow: hidden;
+        }
+
+        .glass-header {
+            background: var(--glass-bg);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border-bottom: var(--glass-border);
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 10;
+        }
+
+        .glass-panel {
+            background: var(--term-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: var(--glass-border);
+            border-radius: 12px;
+            box-shadow: var(--glass-shadow);
+        }
+
+        .terminal-container {
+            flex: 1;
+            margin: 1rem;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden; /* Constrain inside */
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        #terminal-output {
+            flex: 1;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding: 1rem;
+            font-family: monospace;
+            font-size: 0.875rem;
+            line-height: 1.5;
+            width: 100%;
+            white-space: pre-wrap;
+            word-break: break-word;
+            overflow-wrap: break-word;
+            color: #d1d5db; /* gray-300 */
+        }
+        
+        html.light-theme #terminal-output {
+            color: #374151; /* gray-700 */
+        }
+
+        /* Scrolled to bottom pseudo-fix */
+        .term-line-prompt { color: #10b981; font-weight: bold; } /* emerald-500 */
+        html.light-theme .term-line-prompt { color: #059669; }
+        
+        .term-line-error { color: #ef4444; } /* red-500 */
+        .term-line-system { color: #8b5cf6; font-style: italic; opacity: 0.8;}
+
+        .input-bar {
+            background: var(--input-bg);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border-top: var(--glass-border);
+            padding: 0.75rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            z-index: 10;
+        }
+
+        #cmd-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: var(--text-main);
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1rem;
+        }
+        
+        #cmd-input::placeholder {
+            color: var(--text-muted);
+            opacity: 0.5;
+        }
+
+        .btn-float {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: var(--glass-border);
+            border-radius: 8px;
+            color: var(--text-main);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .btn-float:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+        }
+        
+        .send-btn {
+            background: linear-gradient(135deg, #6c4cff, #9c6dff);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            font-weight: bold;
+            font-size: 0.875rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(108, 76, 255, 0.4);
+        }
+        .send-btn:active {
+            transform: scale(0.95);
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50% }
+            50% { background-position: 100% 50% }
+            100% { background-position: 0% 50% }
+        }
+
+        /* Blinking Cursor */
+        .cursor-blink {
+            display: inline-block;
+            width: 8px;
+            height: 15px;
+            background-color: #10b981;
+            vertical-align: middle;
+            animation: blink 1s step-end infinite;
+            margin-left: 2px;
+        }
+        html.light-theme .cursor-blink { background-color: #059669; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+        
+        /* Particles */
+        .snow-particle {
+            display: none;
+            position: fixed;
+            background: white;
+            border-radius: 50%;
+            pointer-events: none;
+            box-shadow: 0 0 10px white;
+            z-index: -1;
+            animation: fall linear infinite;
+        }
+        html.light-theme .snow-particle { display: block; }
+        @keyframes fall { to { transform: translateY(100vh) rotate(360deg); } }
+
+        /* Scrollbar styles for terminal */
+        #terminal-output::-webkit-scrollbar { width: 6px; }
+        #terminal-output::-webkit-scrollbar-track { background: transparent; }
+        #terminal-output::-webkit-scrollbar-thumb { background: rgba(139, 92, 246, 0.5); border-radius: 3px; }
+        #terminal-output::-webkit-scrollbar-thumb:hover { background: rgba(139, 92, 246, 0.8); }
+
+        /* Mobile specific layout tweaks */
+        @media (max-width: 767px) {
+            .glass-header {
+                display: grid !important;
+                grid-template-columns: 1fr 1fr;
+                grid-template-rows: auto auto auto;
+                grid-template-areas: 
+                    "back clear"
+                    "title title"
+                    "badge badge";
+                row-gap: 0.75rem;
+                padding-top: calc(env(safe-area-inset-top) + 12px) !important;
+                padding-bottom: 1rem !important;
+            }
+            .header-back { grid-area: back; justify-self: start; }
+            .header-right { display: contents; }
+            .header-clear { grid-area: clear; justify-self: end; }
+            .header-title { grid-area: title; justify-self: center; font-size: 1.25rem !important; line-height: 1.75rem !important; }
+            .header-badge { grid-area: badge; justify-self: center; margin-top: -0.25rem;}
+            
+            .terminal-container {
+                margin: 0.75rem 0.75rem !important;
+            }
+            
+            #terminal-output {
+                font-size: 0.875rem !important;
+                line-height: 1.6 !important;
+                color: rgba(235, 230, 255, 0.95); /* softer purple/white */
+            }
+            
+            .input-bar {
+                padding: 0.75rem 1.25rem !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="particles-container"></div>
+    
+    <!-- Animated background elements (Colors injected via inline style reacting to CSS vars) -->
+    <div class="fixed inset-0 overflow-hidden -z-10 bg-transparent transition-colors duration-700 pointer-events-none">
+        <div class="absolute w-64 h-64 rounded-full opacity-20 blur-3xl -top-32 -left-32 transition-colors duration-700 pointer-events-none" style="background-color: var(--orb-1)"></div>
+        <div class="absolute w-96 h-96 rounded-full opacity-20 blur-3xl -bottom-32 -right-32 transition-colors duration-700 pointer-events-none" style="background-color: var(--orb-2)"></div>
+    </div>
+    
+    <div class="main-container">
+        <!-- Header -->
+        <header class="glass-header px-4">
+            <button onclick="window.location.href='/control_panel'" class="header-back btn-float px-3 py-1 md:px-3 md:py-1.5 text-[11px] md:text-sm font-medium flex items-center gap-1 rounded-full md:rounded-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+                </svg>
+                BACK
+            </button>
+            
+            <h1 class="header-title text-xl font-bold tracking-wider whitespace-nowrap" style="color: var(--text-main)">REMOTE TERMINAL</h1>
+            
+            <div class="header-right flex items-center gap-3">
+                <button id="clear-btn" class="header-clear btn-float px-3 py-1 md:px-3 md:py-1.5 text-[11px] md:text-xs text-red-400 hover:text-red-300 transition-colors rounded-full md:rounded-lg" title="Clear Terminal">
+                    CLEAR
+                </button>
+                <div class="header-badge flex items-center bg-black bg-opacity-20 px-2.5 py-1 rounded-full border border-gray-700 border-opacity-30">
+                    <span id="conn-dot" class="w-2 h-2 rounded-full bg-red-500 mr-1.5 transition-colors"></span>
+                    <span id="conn-text" class="text-[10px] md:text-xs font-semibold uppercase text-red-500 transition-colors">Offline</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Terminal Output Area -->
+        <main class="terminal-container glass-panel">
+            <div id="terminal-output"></div>
+            <!-- Interactive Input Bar inside the container -->
+            <form id="term-form" class="input-bar" onsubmit="return false;">
+                <span class="text-emerald-500 font-bold opacity-80">></span>
+                <input id="cmd-input" type="text" placeholder="Enter command..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+                <button type="submit" class="send-btn flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+                    </svg>
+                </button>
+            </form>
+        </main>
+    </div>
+
+    <script>
+        // Particles generating logic
+        function createParticles() {
+            const container = document.getElementById('particles-container');
+            for (let i = 0; i < 50; i++) {
+                let p = document.createElement('div');
+                p.classList.add('snow-particle');
+                p.style.width = Math.random() * 5 + 2 + 'px';
+                p.style.height = p.style.width;
+                p.style.left = Math.random() * 100 + 'vw';
+                p.style.top = -10 + 'px';
+                p.style.opacity = Math.random();
+                p.style.animationDuration = Math.random() * 8 + 4 + 's';
+                p.style.animationDelay = Math.random() * 5 + 's';
+                container.appendChild(p);
+            }
+        }
+        createParticles();
+
+        // Terminal logic
+        const termOutput = document.getElementById('terminal-output');
+        const cmdInput = document.getElementById('cmd-input');
+        const termForm = document.getElementById('term-form');
+        const connDot = document.getElementById('conn-dot');
+        const connText = document.getElementById('conn-text');
+        
+        let cursorElem = document.createElement('span');
+        cursorElem.className = 'cursor-blink';
+        
+        // Append initial cursor
+        function appendCursor() {
+            if (cursorElem.parentNode) {
+                cursorElem.parentNode.removeChild(cursorElem);
+            }
+            termOutput.appendChild(cursorElem);
+            termOutput.scrollTop = termOutput.scrollHeight;
+        }
+
+        function appendLine(text, type = 'normal') {
+            // Remove cursor temporarily
+            if (cursorElem.parentNode) cursorElem.parentNode.removeChild(cursorElem);
+            
+            const div = document.createElement('div');
+            // Safe parse
+            div.textContent = text;
+            
+            if (type === 'prompt') {
+                div.className = 'term-line-prompt mb-1';
+            } else if (type === 'system') {
+                div.className = 'term-line-system my-1';
+            } else if (text.toLowerCase().includes('error') || type === 'error') {
+                div.className = 'term-line-error mb-1';
+            } else {
+                div.className = 'mb-1';
+            }
+            
+            termOutput.appendChild(div);
+            appendCursor();
+        }
+
+        // Setup Socket.IO safely
+        const socket = io('/terminal', {
+            transports: ['polling', 'websocket'],
+            reconnection: true,
+            reconnectionAttempts: Infinity,
+            reconnectionDelay: 1000,
+            reconnectionDelayMax: 5000
+        });
+
+        socket.on('connect', () => {
+            connDot.className = 'w-2 h-2 rounded-full bg-emerald-500 mr-1.5 shadow-[0_0_8px_#10b981] animate-pulse';
+            connText.className = 'text-[10px] md:text-xs font-semibold uppercase text-emerald-500';
+            connText.textContent = 'Connected';
+            appendLine('[System]: Secure Socket.IO Connection Established', 'system');
+        });
+
+        socket.on('disconnect', () => {
+            connDot.className = 'w-2 h-2 rounded-full bg-red-500 mr-1.5 shadow-[0_0_8px_#ef4444] animate-pulse';
+            connText.className = 'text-[10px] md:text-xs font-semibold uppercase text-red-500';
+            connText.textContent = 'Disconnected';
+            appendLine('[System]: Connection Lost. Attempting to reconnect...', 'system');
+        });
+
+        socket.on('terminal_output', data => {
+            if (data && data.data) {
+                if (cursorElem.parentNode) {
+                    cursorElem.parentNode.removeChild(cursorElem);
+                }
+                const span = document.createElement('span');
+                span.textContent = data.data;
+                termOutput.appendChild(span);
+                termOutput.appendChild(cursorElem);
+                termOutput.scrollTop = termOutput.scrollHeight;
+            }
+        });
+
+        // Handle Command Sending (Both Enter & Mobile 'Go')
+        termForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const cmd = cmdInput.value.trim();
+            if (cmd.length > 0) {
+                if (cursorElem.parentNode) cursorElem.parentNode.removeChild(cursorElem);
+                const br = document.createElement('br');
+                termOutput.appendChild(br);
+                termOutput.appendChild(cursorElem);
+                
+                socket.emit('terminal_input', { data: cmd + '\n' });
+                appendLine(`> ${cmd}`, 'prompt');
+            }
+            cmdInput.value = '';
+            
+            // On mobile, keeping focus keeps the keyboard open
+            // Only keep focus if it's not a touch event explicitly preventing it,
+            // but generally we want to keep focus.
+            cmdInput.focus();
+            
+            // Ensure input scrolls into view on mobile keyboard open
+            cmdInput.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            
+            // Ensure scroll is at very bottom after send
+            setTimeout(() => { termOutput.scrollTop = termOutput.scrollHeight + 100; }, 50);
+        });
+
+        // Clear button hook
+        document.getElementById('clear-btn').addEventListener('click', () => {
+            termOutput.innerHTML = '';
+            appendLine('[System]: Terminal cleared', 'system');
+        });
+
+        // Initialize view
+        appendCursor();
+        
+        // Auto-focus logic for Desktop only to avoid popping up keyboard aggressively on mobile load
+        if (window.innerWidth > 768) {
+            setTimeout(() => cmdInput.focus(), 500);
+        }
+        
+        // Mobile Keyboard Resizing Handling
+        function updateTerminalHeight() {
+            document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
+        }
+        
+        window.addEventListener('resize', () => {
+            updateTerminalHeight();
+            requestAnimationFrame(() => {
+                termOutput.scrollTop = termOutput.scrollHeight + 500;
+            });
+        });
+        
+        window.addEventListener('orientationchange', updateTerminalHeight);
+        updateTerminalHeight();
+    </script>
+</body>
+</html>
