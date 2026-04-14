@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="assests/image0.jpeg" alt="DOMINUS Hero" style="width: 100%; max-width: 800px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); margin-bottom: 20px;" />
+  <img src=".assests/image0.jpeg" alt="DOMINUS Hero" style="width: 100%; max-width: 800px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); margin-bottom: 20px;" />
   <h1>🌌 DOMINUS</h1>
   <p><strong>Premium Dual System Controller & Hardware Switcher</strong></p>
   <p>
